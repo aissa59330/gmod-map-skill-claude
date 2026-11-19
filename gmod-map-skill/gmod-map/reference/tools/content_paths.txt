@@ -1,0 +1,11 @@
+# Dossiers des addons Workshop EXTRAITS (tools/extract_workshop.py, hors du Temp que Windows nettoie), utilisés UNIQUEMENT pour la compilation.
+# Sur la page Workshop de la map, ces trois addons sont à mettre en « éléments requis ».
+# Une ligne = un dossier contenant materials/ et/ou models/.
+C:\Users\<UTILISATEUR>\gn_content\star_wars_imperial_materials_1206775008
+C:\Users\<UTILISATEUR>\gn_content\sci_fi_props_megapack_284266415
+C:\Users\<UTILISATEUR>\gn_content\star_wars_skybox_space_props_1708099047
+C:\Users\<UTILISATEUR>\gn_content\star_wars_misc_prop_pack_1987994709
+C:\Users\<UTILISATEUR>\gn_content\star_wars_rogue_one_prop_pack_946190478
+C:\Users\<UTILISATEUR>\gn_content\sw_modelpack_miscellaneous_1841418570
+C:\Users\<UTILISATEUR>\gn_content\sw_modelpack_deathstar_1518614446
+C:\Users\<UTILISATEUR>\gn_content\cgi_cis_droid_pack_721821542
