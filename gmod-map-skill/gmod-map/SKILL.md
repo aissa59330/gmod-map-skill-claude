@@ -36,6 +36,13 @@ Principe : **on ne touche jamais le .vmf à la main**, tout vient du générateu
 Si l'utilisateur veut passer sur Hammer, lui expliquer que la régénération écraserait ses retouches.
 
 ## 1 bis. Concevoir « rectangulaire et optimisé » dès le départ (préférence de l'utilisateur)
+- **Plan général en « − », pas en « + »** : la map est une **longue bande rectangulaire** où les zones se suivent
+  sur **un seul axe** (départ à un bout, objectif final à l'autre), en exploitant la longueur maximale (~32 000 u)
+  plutôt que la largeur. Pas de plan en croix / en étoile avec des branches dans toutes les directions.
+  Les « 3 voies » d'une zone restent côte à côte dans la bande (voie principale + 2 flancs parallèles).
+  Avantages : progression claire, chaque zone ne voit que la précédente et la suivante (visibilité très bien
+  découpée), spawns de phase faciles, extérieur long pour le combat aérien. Si la longueur ne suffit pas, replier la bande
+  en « U » (deux bandes parallèles séparées par un mur plein), jamais en croix.
 - **Formes rectangulaires** : salles, bâtiments, couloirs et cours en boîtes alignées sur la grille, angles à 90°,
   couloirs droits avec virages à angle droit. C'est ce qui rend VVIS rapide et la visibilité bien découpée.
 - **Structure en world, décor en func_detail** : seuls les murs droits, sols et plafonds porteurs sont en world ;
