@@ -1,4 +1,4 @@
-"""Génère maps_src/givre_noir.vmf (+ givre_noir.json pour les outils, + points de la tournée)."""
+"""GÃƒÆ’Ã‚Â©nÃƒÆ’Ã‚Â¨re maps_src/givre_noir.vmf (+ givre_noir.json pour les outils, + points de la tournÃƒÆ’Ã‚Â©e)."""
 import json
 import os
 import sys
@@ -34,7 +34,7 @@ def main():
     kit.build(w)
     dressing.build(w)
     M = w.meta
-    # la seconde porte du sas ne s'ouvre qu'une fois la première fermée
+    # la seconde porte du sas ne s'ouvre qu'une fois la premiÃƒÆ’Ã‚Â¨re fermÃƒÆ’Ã‚Â©e
     outs = dict(M.get("door_outputs", []))
     for e in w.ents:
         if e["classname"] == "func_door" and e["kv"].get("targetname") in outs:
@@ -46,8 +46,11 @@ def main():
     vmf.spawn["detailvbsp"] = "detail.vbsp"
     vmf.spawn["detailmaterial"] = "detail/detailsprites"
 
-    n_nodes = nodes.build(w, [props.world_box(*p) for p in M["props"]])
-    # props au-dessus d'une fosse (tranchées techniques) : posés au fond si la fosse est assez large, sinon retirés
+    # AUCUN point de navigation (info_node) : choix de l'organisateur pour les events ÃƒÆ’Ã‚Â  600 PNJ
+    # (les PNJ ne cherchent plus de chemin : ils avancent en ligne droite). Mettre True pour les rÃƒÆ’Ã‚Â©activer.
+    WITH_NODES = False
+    n_nodes = nodes.build(w, [props.world_box(*p) for p in M["props"]]) if WITH_NODES else 0
+    # props au-dessus d'une fosse (tranchÃƒÆ’Ã‚Â©es techniques) : posÃƒÆ’Ã‚Â©s au fond si la fosse est assez large, sinon retirÃƒÆ’Ã‚Â©s
     pits = [sp.box for sp in w.spaces if "pit" in sp.name]
     keep = []
     for e in w.ents:
@@ -61,8 +64,14 @@ def main():
                     continue
         keep.append(e)
     w.ents[:] = keep
+    # func_viscluster sur tout le ciel des extÃƒÆ’Ã‚Â©rieurs (au-dessus de 2560 du sol) : beaucoup moins de zones de visibilitÃƒÆ’Ã‚Â©
+    for sp in w.spaces:
+        if sp.sky and not sp.name.startswith("ciel"):
+            x0, y0, z0, x1, y1, z1 = sp.box
+            if z1 - z0 > 3072:
+                w.ent("func_viscluster", solids=[Block((x0, y0, z0 + 2560, x1, y1, z1), "tools/toolstrigger")])
     optim_stats = optim.apply(w)
-    # anti-grief (sans addon) : Sandbox et ses dérivés lisent ces clés sur les entités de la map ->
+    # anti-grief (sans addon) : Sandbox et ses dÃƒÆ’Ã‚Â©rivÃƒÆ’Ã‚Â©s lisent ces clÃƒÆ’Ã‚Â©s sur les entitÃƒÆ’Ã‚Â©s de la map ->
     # ni physgun, ni toolgun (remover compris), ni menu contextuel sur portes, boutons, objectifs, effets...
     for e in w.ents:
         if e["classname"] not in ("prop_static", "info_player_start", "info_node", "light", "light_spot"):
@@ -77,11 +86,11 @@ def main():
         for v in box:
             assert abs(v) <= LIMIT, box
         sol = make_box_solid(vmf, box, retheme(mat, zone, role, "world", sname))
-        # échelle de lightmap : fine là où les ombres se voient (sols, murs bas), grossière ailleurs
+        # ÃƒÆ’Ã‚Â©chelle de lightmap : fine lÃƒÆ’Ã‚Â  oÃƒÆ’Ã‚Â¹ les ombres se voient (sols, murs bas), grossiÃƒÆ’Ã‚Â¨re ailleurs
         sp = space_by_name.get(sname)
         h = (sp.box[5] - sp.box[2]) if sp else 256
         if sky:
-            lm = 32 if role == "floor" else 64            # extérieur : falaises immenses, éclairage du ciel uniforme
+            lm = 32 if role == "floor" else 64            # extÃƒÆ’Ã‚Â©rieur : falaises immenses, ÃƒÆ’Ã‚Â©clairage du ciel uniforme
         elif role == "ceil":
             lm = 32
         elif role.startswith("wall") and h >= 512:
@@ -90,20 +99,20 @@ def main():
             lm = 16
         for sd in sol.sides:
             sd.lightmap = lm
-            if sd.mat.lower() == "givre_noir/ext_facade":      # texture 1024 : échelle doublée = même taille au mur
+            if sd.mat.lower() == "givre_noir/ext_facade":      # texture 1024 : ÃƒÆ’Ã‚Â©chelle doublÃƒÆ’Ã‚Â©e = mÃƒÆ’Ã‚Âªme taille au mur
                 sd.uaxis = _UV(sd.uaxis.x, sd.uaxis.y, sd.uaxis.z, offset=sd.uaxis.offset / 2, scale=0.5)
                 sd.vaxis = _UV(sd.vaxis.x, sd.vaxis.y, sd.vaxis.z, offset=sd.vaxis.offset / 2, scale=0.5)
         lm_stats[lm] = lm_stats.get(lm, 0) + 1
         vmf.add_brush(sol)
 
     def themed(b):
-        """Copie d'un Block/Poly avec les textures du thème de sa zone."""
+        """Copie d'un Block/Poly avec les textures du thÃƒÆ’Ã‚Â¨me de sa zone."""
         bb = b.box if isinstance(b, Block) else b.bbox
         c = ((bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, (bb[2] + bb[5]) / 2)
         z = w.zone_at(c)
         thin = (bb[5] - bb[2]) <= 32 and (bb[3] - bb[0]) * (bb[4] - bb[1]) >= 128 * 128 and b.top is not None
         role = "floor" if thin else "block"
-        # grille ajourée seulement sur les dalles fines (sinon on verrait l'intérieur vide du bloc)
+        # grille ajourÃƒÆ’Ã‚Â©e seulement sur les dalles fines (sinon on verrait l'intÃƒÆ’Ã‚Â©rieur vide du bloc)
         top_kind = b.kind if (bb[5] - bb[2]) <= 32 else "world"
         return dataclasses.replace(b, mat=retheme(b.mat, z, role, b.kind),
                                    top=retheme(b.top, z, "top", top_kind) if b.top else None)
@@ -125,7 +134,7 @@ def main():
             spec = FIT.get(sd.mat.lower())
             if not spec:
                 continue
-            n = -sd.normal()          # srctools : normal() pointe vers l'intérieur du bloc
+            n = -sd.normal()          # srctools : normal() pointe vers l'intÃƒÆ’Ã‚Â©rieur du bloc
             if abs(n.z) > 0.5:
                 continue
             right = _V(-n.x, -n.y, 0).cross(_V(0, 0, 1))
@@ -194,8 +203,8 @@ def main():
     with open(os.path.join(ROOT, "maps_src", "givre_noir.json"), "w", encoding="utf-8") as f:
         json.dump(side, f)
 
-    # ---- points de la tournée pour l'addon de dev ----
-    lua = ["-- généré par build_map.py : NE PAS ÉDITER", "GN_TOUR = {"]
+    # ---- points de la tournÃƒÆ’Ã‚Â©e pour l'addon de dev ----
+    lua = ["-- gÃƒÆ’Ã‚Â©nÃƒÆ’Ã‚Â©rÃƒÆ’Ã‚Â© par build_map.py : NE PAS ÃƒÆ’Ã¢â‚¬Â°DITER", "GN_TOUR = {"]
     for (name, pos, ang) in M["tour"]:
         lua.append('  { name = "%s", pos = Vector(%d, %d, %d), ang = Angle(%d, %d, %d) },'
                    % (name, *pos, *ang))
@@ -213,11 +222,11 @@ def main():
     n_ents = len(w.ents) + 1
     print(f"VMF : {path}")
     print(f"  noeuds PNJ : {n_nodes}")
-    print(f"  areaportals ouverts : {len(open_portals)}  dalles par échelle de lightmap : {lm_stats}")
-    print(f"  optim : {optim_stats}  faces cachées -> nodraw : {n_nodraw}  dalles world : {len(slabs)}")
+    print(f"  areaportals ouverts : {len(open_portals)}  dalles par ÃƒÆ’Ã‚Â©chelle de lightmap : {lm_stats}")
+    print(f"  optim : {optim_stats}  faces cachÃƒÆ’Ã‚Â©es -> nodraw : {n_nodraw}  dalles world : {len(slabs)}")
     print(f"  kit : {M.get('kit_stats')}  ambiance : {M.get('dressing_stats')}  props au total : {len(M['props'])}")
     print(f"  refus de placement : {dict(M.get('rejets', {}))}")
-    print(f"  espaces={len(w.spaces)} dalles={len(slabs)} blocs_world={n_world_blocks} detail={n_detail} entités={n_ents}")
+    print(f"  espaces={len(w.spaces)} dalles={len(slabs)} blocs_world={n_world_blocks} detail={n_detail} entitÃƒÆ’Ã‚Â©s={n_ents}")
 
 
 if __name__ == "__main__":

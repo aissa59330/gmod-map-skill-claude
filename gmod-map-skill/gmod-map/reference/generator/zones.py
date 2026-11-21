@@ -52,6 +52,14 @@ def rock(w, box, rnd=None, mat=MAT_ROCK):
     x0, y0, z0, x1, y1, z1 = box
     k = (rnd.uniform(0.18, 0.35) if rnd else 0.25)
     w.add(frustum(box, ((x1 - x0) * k, (y1 - y0) * k), mat))
+    # bloqueur de visibilité : bloc nodraw « world » inscrit dans les grands rochers (cache ce qui est derrière,
+    # sans les pentes du rocher dans le calcul de visibilité -> les PNJ cachés « dorment », moins de modèles dessinés)
+    ix, iy = (x1 - x0) * 0.36, (y1 - y0) * 0.36
+    bx0, by0 = -(-(x0 + ix) // 16) * 16, -(-(y0 + iy) // 16) * 16
+    bx1, by1 = (x1 - ix) // 16 * 16, (y1 - iy) // 16 * 16
+    top = (z1 - z0) // 256 * 256 + z0
+    if z1 - z0 >= 1024 and bx1 - bx0 >= 64 and by1 - by0 >= 64:
+        w.block((bx0, by0, z0, bx1, by1, top), "tools/toolsnodraw", "world")
 
 
 def slab_with_holes(w, box, holes, mat=MAT_METAL, kind="detail", top=MAT_GRATE):

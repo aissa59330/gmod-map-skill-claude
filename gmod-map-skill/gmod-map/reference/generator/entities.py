@@ -184,8 +184,8 @@ def build_entities(w):
         door(w, *d)
 
     w.ent("env_fog_controller", M["fog_origin"], targetname="gn_fog", fogenable=1, fogblend=0,
-          fogcolor="178 194 214", fogcolor2="178 194 214", fogstart=1500, fogend=10000, fogmaxdensity=0.85,
-          farz=11000, spawnflags=1, fogdir="1 0 0", angles="0 0 0", use_angles=0)
+          fogcolor="178 194 214", fogcolor2="178 194 214", fogstart=1400, fogend=8000, fogmaxdensity=0.88,
+          farz=9000, spawnflags=1, fogdir="1 0 0", angles="0 0 0", use_angles=0)
     w.ent("env_skypaint", (-13000, 0, 1900), targetname="gn_sky", topcolor="0.55 0.64 0.78", bottomcolor="0.82 0.86 0.92",
           fadebias="0.4", duskintensity="0", sunsize="0", starscale="0", drawstars="0", HDRScale="0.66")
 
@@ -416,8 +416,8 @@ def build_entities(w):
     P = {
         1: ([], [O("OnTrigger", "gn_phase_2_start", "Trigger")]),
         2: ([], opens("gn_door_gate", "gn_door_conduit") + [
-                O("OnTrigger", "gn_fog", "SetStartDist", "2500", delay=8), O("OnTrigger", "gn_fog", "SetEndDist", "12000", delay=8),
-                O("OnTrigger", "gn_fog", "SetFarZ", "13000", delay=8),
+                O("OnTrigger", "gn_fog", "SetStartDist", "2500", delay=8), O("OnTrigger", "gn_fog", "SetEndDist", "8000", delay=8),
+                O("OnTrigger", "gn_fog", "SetFarZ", "9000", delay=8),
                                                              O("OnTrigger", "gn_phase_3_start", "Trigger")]),
         3: ([], [O("OnTrigger", "gn_phase_4_start", "Trigger")]),
         4: ([], opens("gn_sas_door_1", "gn_door_4n", "gn_door_4s") + [O("OnTrigger", "gn_phase_5_start", "Trigger")]),

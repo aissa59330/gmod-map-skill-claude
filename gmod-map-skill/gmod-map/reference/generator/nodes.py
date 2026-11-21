@@ -1,6 +1,6 @@
 """Réseau de navigation des PNJ (info_node) pour les bots/PNJ de l'event.
 
-Grille sur chaque sol (pas de 256 à l'intérieur, 448 dehors), à 48 u des murs, jamais :
+Grille sur chaque sol (pas de 320 à l'intérieur, 704 dehors), à 48 u des murs, jamais :
 dans un bloc / un prop / un clip, au-dessus du vide, ni dans une zone de trigger_hurt.
 Les info_node n'occupent pas d'edict : le jeu construit le graphe (maps/graphs/givre_noir.ain) au premier chargement.
 Plafond : 3500 nœuds (limite moteur 4096).
@@ -45,7 +45,7 @@ def build(w, prop_boxes):
         x0, y0, z0, x1, y1, z1 = s.box
         if z1 - z0 < 96 or min(x1 - x0, y1 - y0) < 96:
             continue
-        step = 448 if s.sky else 256
+        step = 704 if s.sky else 320          # moins de noeuds = recherche de chemin plus légère (600 PNJ)
         floors = [z0] + [f for f in M.get("floors", {}).get(s.name, []) if s.name != "comm_tower"]
         nx = max(1, int((x1 - x0 - 96) // step) + 1)
         ny = max(1, int((y1 - y0 - 96) // step) + 1)

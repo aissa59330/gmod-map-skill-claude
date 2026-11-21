@@ -57,7 +57,7 @@ def boom(w, n, pos, size=1.0, fire=True, gibs=True, shake_r=2000):
         for k, mdl in enumerate(("models/gibs/metal_gib2.mdl", "models/gibs/metal_gib4.mdl"), 1):
             w.ent("env_shooter", (x, y, z + 30), targetname=f"{n}_gib{k}", angles="-80 0 0", m_iGibs=6, delay=0,
                   gibangles="0 0 0", gibanglevelocity=400, m_flVelocity=int(420 * size), m_flVariance=0.9, m_flGibLife=7,
-                  shootmodel=mdl, shootsounds=2, simulation=1, nogibshadows=1, gibgravityscale=1, massoverride=0, spawnflags=0)
+                  shootmodel=mdl, shootsounds=2, simulation=0, nogibshadows=1, gibgravityscale=1, massoverride=0, spawnflags=0)
             outs.append(T(f"{n}_gib{k}", "Shoot", d=0.05))
     if fire:
         w.ent("env_fire", (x, y, z), targetname=n + "_fire", health=14, firesize=int(110 * size), fireattack=1, firetype=0,
@@ -255,11 +255,12 @@ def phase4(w, M):
         arms += [O("OnTimer", n, "Open", delay=d), O("OnTimer", n + "_sp", "StartSpark", delay=d + 1.4),
                  O("OnTimer", n + "_s", "PlaySound", delay=d + 1.4), O("OnTimer", n + "_sp", "StopSpark", delay=d + 2.6),
                  O("OnTimer", n, "Close", delay=d + 2.8)]
-    w.ent("logic_timer", (1536, 0, 400), targetname="fx_arms_t", RefireTime=6, StartDisabled=0, UseRandomTime=0, outputs=arms)
+    w.ent("logic_timer", (1536, 0, 400), targetname="fx_arms_t", RefireTime=6, StartDisabled=1, UseRandomTime=0, outputs=arms)
     snd(w, "fx_factory_hum", (1536, 0, 300), "ambient/levels/labs/machine_moving_loop3.wav", radius=3500, vol=7, loop=True)
     snd(w, "fx_factory_stop", (1536, 0, 300), "ambient/levels/labs/machine_stop1.wav", radius=6000)
     snd(w, "fx_factory_down", (1536, 0, 300), "ambient/machines/thumper_shutdown1.wav", radius=6000)
-    add(w, "gn_phase_1_start", [T("fx_factory_hum", "PlaySound", d=8)])
+    add(w, "gn_phase_4_start", [T("fx_factory_hum", "PlaySound"), T("fx_arms_t", "Enable")])
+    add(w, "gn_phase_5_done", [T("fx_arms_t", "Disable"), T("fx_factory_hum", "StopSound")])
     add(w, "gn_factory_blackout", [T("fx_arms_t", "Disable"), T("fx_factory_hum", "StopSound"), T("fx_factory_stop", "PlaySound"),
                                    T("fx_factory_down", "PlaySound", d=0.6)]
         + [T(f"fx_arm_{k}", "Close", d=0.3) for k in range(1, 5)] + [T(f"fx_arm_{k}_sp", "StopSpark") for k in range(1, 5)])
@@ -307,13 +308,14 @@ def phase6(w):
         w.ent("env_sprite", (x, y, z), targetname="fx_dc_led", model="sprites/glow01.spr", rendermode=9,
               rendercolor="60 200 255", renderamt=255, renderfx=1, scale=0.35, GlowProxySize=4, spawnflags=1)
     for k, (x, y) in enumerate(((10880, -768), (12672, -768), (10880, 768), (12672, 768)), 1):
-        spinner(w, f"fx_dc_fan_{k}", x, y, 1360, 90, mat=MAT_METAL, speed=90, thick=12)
+        spinner(w, f"fx_dc_fan_{k}", x, y, 1360, 90, mat=MAT_METAL, speed=90, thick=12, start=False)
     snd(w, "fx_dc_fans", (11776, 0, 1300), "ambient/machines/turbine_loop_1.wav", radius=4000, vol=6, loop=True)
     snd(w, "fx_dc_off", (11776, 0, 1100), "ambient/levels/citadel/stalk_poweroff_on_17_10.wav", radius=6000)
     snd(w, "fx_dc_clonk", (10240, 560, 860), "plats/bigstop1.wav", radius=4000)
     a = arcs(w, "fx_dc_breaker_arc", (10250, 560, 860), radius=160)
     fans = lambda inp, p="": [T(f"fx_dc_fan_{k}", inp, p) for k in range(1, 5)]
-    add(w, "gn_phase_1_start", [T("fx_dc_fans", "PlaySound", d=10)])
+    add(w, "gn_phase_6_start", [T("fx_dc_fans", "PlaySound")] + [T(f"fx_dc_fan_{k}", "Start") for k in range(1, 5)])
+    add(w, "gn_phase_7_done", [T("fx_dc_fans", "StopSound")] + [T(f"fx_dc_fan_{k}", "Stop") for k in range(1, 5)])
     add(w, "gn_hack_fx_on", [T("fx_dc_led", "AddOutput", "renderfx 10")] + fans("SetSpeed", "1"))
     add(w, "gn_hack_fx_off", [T("fx_dc_led", "AddOutput", "renderfx 1")] + fans("SetSpeed", "0.4"))
     add(w, "gn_hack_cut", [T("fx_dc_led", "HideSprite"), T("fx_dc_fans", "StopSound"), T("fx_dc_off", "PlaySound"), T(a, "TurnOn")]
@@ -349,11 +351,11 @@ def phase7(w, M):
 def phase8(w, M):
     # tour : anneaux qui tournent autour de l'antenne + éclairs ; charges qui bipent de plus en plus vite ; GROS BOUM
     for k, z in enumerate((1580, 2092, 2604), 1):
-        spinner(w, f"fx_ant_ring_{k}", 6656, -5120, z, 330, speed=25 + 10 * k, thick=20)
-    a = arcs(w, "fx_ant_arc", (6656, -5120, 2700), radius=420, start_on=True)
+        spinner(w, f"fx_ant_ring_{k}", 6656, -5120, z, 330, speed=25 + 10 * k, thick=20, start=False)
+    a = arcs(w, "fx_ant_arc", (6656, -5120, 2700), radius=420)
     snd(w, "fx_ant_hum", (6656, -5120, 1800), "ambient/levels/citadel/zapper_ambient_loop1.wav", radius=3500, vol=6, loop=True)
     snd(w, "fx_ant_die", (6656, -5120, 1800), "ambient/levels/labs/teleport_winddown1.wav", radius=8000)
-    add(w, "gn_phase_1_start", [T("fx_ant_hum", "PlaySound", d=12)])
+    add(w, "gn_phase_8_start", [T("fx_ant_hum", "PlaySound"), T(a, "TurnOn")] + [T(f"fx_ant_ring_{k}", "Start") for k in (1, 2, 3)])
     for i, box in enumerate(M["charges"], 1):
         n = f"gn_charge_{i}"
         cx, cy = (box[0] + box[3]) / 2, (box[1] + box[4]) / 2
@@ -369,8 +371,8 @@ def phase8(w, M):
 def phase9(w, M):
     # noyau : anneaux tournants, vapeur aux vannes, cœur bleu -> rouge, arcs, flash final
     rcx, rcy, kz = M["reactor_center"]
-    spinner(w, "fx_core_ring_1", rcx, rcy, kz + 480, 380, speed=30, thick=28)
-    spinner(w, "fx_core_ring_2", rcx, rcy, kz - 480, 380, speed=22, thick=28)
+    spinner(w, "fx_core_ring_1", rcx, rcy, kz + 480, 380, speed=30, thick=28, start=False)
+    spinner(w, "fx_core_ring_2", rcx, rcy, kz - 480, 380, speed=22, thick=28, start=False)
     for (dx, dy) in ((310, 0), (-310, 0), (0, 310), (0, -310)):
         w.ent("env_sprite", (rcx + dx, rcy + dy, kz + 700), targetname="fx_core_blue", model="sprites/glow01.spr", rendermode=9,
               rendercolor="80 200 255", renderamt=255, renderfx=1, scale=4, GlowProxySize=48, spawnflags=1)
@@ -387,7 +389,7 @@ def phase9(w, M):
                                    T("fx_core_shake", "Amplitude", "9", d=0.1)])
     b = boom(w, "fx_core", (rcx, rcy, kz + 200), size=2.0, fire=False, gibs=False, shake_r=6000)
     add(w, "gn_phase_9_done", [T(b)])
-    add(w, "gn_phase_1_start", [T("fx_core_ring_1", "SetSpeed", "0.4", d=1), T("fx_core_ring_2", "SetSpeed", "0.4", d=1)])
+    add(w, "gn_phase_9_start", [T("fx_core_ring_1", "Start"), T("fx_core_ring_2", "Start"), T("fx_core_ring_1", "SetSpeed", "0.4", d=1), T("fx_core_ring_2", "SetSpeed", "0.4", d=1)])
 
 
 def phase10_11(w, M):

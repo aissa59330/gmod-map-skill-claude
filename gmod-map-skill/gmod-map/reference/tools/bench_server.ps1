@@ -45,7 +45,7 @@ Remove-Item (Join-Path $Out "cpu.txt") -ErrorAction SilentlyContinue
 
 # 3) lancement, attente, fermeture
 $start = Get-Date
-$p = Start-Process -FilePath $exe -ArgumentList "-console -condebug -game garrysmod -tickrate 66 -norestart +sv_lan 1 +sv_hibernate_think 1 +maxplayers 128 +map givre_noir" -WorkingDirectory $Game -PassThru
+$p = Start-Process -FilePath $exe -ArgumentList "-console -condebug -game garrysmod -tickrate 66 -norestart +sv_lan 1 +sv_hibernate_think 1 +maxplayers 128 +map givre_noir" -WorkingDirectory $Game -WindowStyle Minimized -PassThru
 try {
     $deadline = $start.AddSeconds($Timeout)
     while ((Get-Date) -lt $deadline -and -not $p.HasExited) {

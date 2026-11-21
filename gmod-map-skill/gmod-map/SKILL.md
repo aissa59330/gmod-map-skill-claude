@@ -99,14 +99,59 @@ Si l'utilisateur veut passer sur Hammer, lui expliquer que la régénération é
 - La liste de pack est reconstruite à chaque compilation et VÉRIFIÉE (fichiers maison présents dans le .bsp).
 - Un leak = corriger avant tout (lire le .lin / la ligne « Entity … leaked »).
 
-## 6. Optimisation pour 100 joueurs
-- Areaportals sur chaque porte, salles fermées, VVIS complet ; brouillard + farz adaptés (extérieur : vue longue
-  pour le combat en plaine, ex. fogend 10000 / farz 11000 ; mesurer).
-- Props : LOD (Blender + Plumber → Decimate → studiomdl, $cdmaterials du modèle d'origine), fade (plus long dehors),
-  collisions bbox ou aucune, prop_static partout où possible ; peu d'entités networkées (edicts).
-- Diagnostic (`tools/diag.py`) + bench en jeu (`tools/bench.ps1`, bots qui se battent ; serveur dédié avec
-  `sv_hibernate_think 1`). Mesures FPS avec l'utilisateur : `net_graph 1`, `fps_max 0`, points `setpos/setang`.
+## 6. Optimisation pour 100 joueurs et beaucoup de PNJ (recette validée par mesures)
+Ordre d'impact constaté (Givre Noir : 20 → 850+ FPS dehors ; serveur 2,39 → 1,62 ms/tick à 600 PNJ) :
+1. **Visibilité** : VVIS complet ; areaportals dans chaque porte (très rentable sur une map intérieure à murs droits,
+   peu sur un terrain ouvert à bâtiments ronds) ; murs droits et gros volumes en world, formes rondes/inclinées et
+   petit décor en func_detail (des brushes ronds en world multiplient les zones et VVIS dure des heures).
+   Extérieurs : **bloc nodraw world inscrit** dans les grands rochers/falaises/tours/silos/gros vaisseaux posés
+   (cache ce qui est derrière sans compliquer le calcul) ; sous un terrain en déplacements, blocs nodraw world
+   (hauteur arrondie par pas de 256, fusionnés en grands rectangles) ; **func_viscluster** sur le ciel au-dessus
+   de ~2560 du sol. Les PNJ qu'aucun joueur ne voit « dorment » (IA ralentie) : couper la vue fait aussi gagner le serveur.
+2. **Éclairage 100 % précalculé** : aucune light_dynamic permanente (flash 0,2 s seulement) ; clignotements = `pattern`.
+3. **Distance de vue** : env_fog_controller fogstart ~1400, fogend ~8000, fogmaxdensity ~0.88, **farz ~9000**
+   (au-delà, chaque PNJ lointain est dessiné). Dans le ciel 3D, garder un brouillard léger (sinon silhouettes plates).
+4. **Props** : tout en prop_static (aucun prop_physics / prop_dynamic sauf nécessité) ; LOD Blender + Plumber →
+   studiomdl pour les modèles les plus lourds (sommets × exemplaires) : LOD0 ≤ 2000 triangles, LOD1 50 %, LOD2 20 %,
+   mêmes $cdmaterials ; collisions : solid 0 (buissons), solid 2 (caisses, barils) ; fade selon la plus grande dimension :
+   < 48 : 500→750 ; < 128 : 1000→1400 ; < 300 : 1800→2400 ; < 800 : 3000→3800 ; buissons/petits rochers 1300→1800 ;
+   arbres/gros rochers 3400→4500 ; bâtiments et très gros modèles : jamais. Vaisseaux du ciel 3D : décimés à
+   3000–5000 triangles, échelle intégrée, en prop_static (un prop_dynamic de vaisseau = des centaines de milliers de sommets).
+5. **PNJ** : le graphe de nœuds (info_node) coûte au serveur ; avec des centaines de PNJ, proposer de le **supprimer**
+   (mesuré : −32 % de CPU serveur à 600 PNJ ; les PNJ avancent alors en ligne droite et peuvent buter contre les murs —
+   à faire valider par l'utilisateur) ou de l'espacer fortement dehors (≥ 700). Pas de .nav = rien à faire pour les NextBots.
+6. **Effets** : actifs seulement pendant leur phase (timers/sons/rotations démarrés au `_start`, coupés au `_done`) ;
+   débris d'explosion non physiques (env_shooter simulation 0) ; smokestack à débit réduit ; env_fire damagescale 0.
+7. **Terrain ouvert** : déplacements puissance 3 (dalles de 1024) ; lightmap 32 sur la zone de jeu, 64 en bordure ;
+   herbe automatique réduite (copie du detail.vbsp de Gmod avec densités ×0,2, clé `detailvbsp` du worldspawn).
+8. **Contenu embarqué** : uniquement ce qui est utilisé, jamais un fichier qui existe déjà dans les VPK du jeu de base ;
+   textures réduites et recompressées en DXT (1024 max, 512 pour ce qui ne se voit que de loin), cartes de relief retirées si besoin.
+- Essayé puis abandonné (terrain ouvert) : portes + areaportals sur des bâtiments ronds (2900+ zones, VVIS > 1 h, gain
+  faible, PNJ bloqués dehors car graphe calculé portes fermées) ; func_viscluster au ras des bâtiments (aucun gain).
+- Comparer avec d'autres maps : lire leurs BSP avec srctools (farz, nombre de zones, herbe, props, distances de fade).
 - Sortir en noclip hors de la map montre tout (normal) : tester la visibilité depuis l'intérieur.
+
+Prompts prêts à l'emploi (optimiser une map, bench serveur, nouvelle map) : `reference/PROMPTS.md`.
+Démarche d'optimisation : diagnostic sans rien modifier → mesure « avant » → optimiser par ordre d'impact →
+mesure « après » aux mêmes points → tableau avant / après ; demander avant tout changement de gameplay.
+
+## 6 bis. Mesurer (avant / après, toujours)
+- **FPS client** (avec l'utilisateur) : `sv_cheats 1`, `net_graph 1`, `fps_max 0`, mêmes points `setpos x y z; setang p y r`
+  à chaque fois (spawn, en l'air dehors, chaque grande salle, pendant les effets lourds) ; noter FPS normal et minimum.
+- **Serveur** : bench sur **serveur dédié local** (méthode complète : `reference/tools/bench_server.ps1` +
+  `reference/addons/givre_noir_srvbench/`) : SteamCMD app 4020 dans un dossier à chemin court, `+sv_hibernate_think 1`,
+  1 bot (ou 100) + PNJ par paliers 0/200/400/600, 60 s par palier ; CPU mesuré de l'extérieur
+  (TotalProcessorTime toutes les 5 s → ms CPU par tick ; `engine.ServerFrameTime` renvoie 0 en dédié) ; intervalle de tick
+  max (> 50 ms = freeze ; ~30 ms = normal sous Windows) ; ticks ratés.
+- Conditions : **rien d'autre de lourd sur le PC** (une compilation en parallèle crée de faux freezes de 200–700 ms),
+  fenêtre du serveur **réduite** (un clic dedans le met en pause), une seule différence entre les deux versions,
+  garder une copie de chaque .bsp testé et installer celle qui gagne.
+- Après une compilation interrompue, vérifier qu'aucun `vbsp/vvis/vrad/srcds` ne tourne encore (ils mangent le CPU et
+  les FPS du joueur jusqu'au redémarrage) ; ne tuer que ceux lancés par nos outils.
+- Côté event : la limite vient du **nombre de PNJ vivants en même temps**, pas de la map. Conseiller aux staffs de trouver
+  leur seuil sur leur serveur (seul, paliers 300/400/500 : ping stable, `net_graph 4` « sv » proche du tickrate, loss/choke 0),
+  de garder ~30 % de marge pour les joueurs (souvent 200 PNJ max) et de faire apparaître les droïdes par vagues par zone.
+  Un ping qui grimpe en solo sur le serveur dédié = serveur surchargé (pas le réseau).
 
 ## 7. Vérification en jeu (tournée)
 - Addon de test temporaire (téléportation, captures, tests logiques et mini-jeux) copié puis retiré ; Gmod lancé en
@@ -123,6 +168,11 @@ Si l'utilisateur veut passer sur Hammer, lui expliquer que la régénération é
 - gmpublisher : 1re fois « Publish », ensuite **Update** sur l'addon existant (sinon nouvel ID).
   Éléments requis à cocher sur la page Steam. Les serveurs ajoutent l'ID à leur collection.
 - Open source possible : licence CC BY 4.0 (attribution), sources (.vmf + générateur) sur GitHub, sans le contenu tiers.
+- Description Workshop (modèle qui a marché) : `[h1]` titre ; pitch (joueurs, durée, thème) ; `[h2]` déroulé / zones ;
+  `[h2]` Pour les maîtres du jeu (repères de spawn, commandes de phase, ce qui est affiché, anti-grief, « testée à N PNJ ») ;
+  `[h2]` Infos techniques (aucun Lua, packs requis, nom en jeu) ; `[h2]` Open source (phrase de crédit exacte, lien
+  CC BY 4.0, la licence ne couvre pas le contenu des autres auteurs) ; `[h2]` Crédits. Exemple : `reference/description_workshop.txt`.
+- Note de mise à jour (Update) : sections OPTIMISATION / NOUVEAUTÉS / CORRECTIONS, une ligne par changement visible.
 
 ## 9. Façon de travailler avec l'utilisateur
 - Il teste en jeu et envoie des captures (+ `getpos`) : corriger exactement ce qui est montré, recompiler, dire quoi tester.

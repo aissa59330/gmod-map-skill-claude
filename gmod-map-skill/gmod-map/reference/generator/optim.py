@@ -71,7 +71,7 @@ def apply(w):
             mn, mx = fade_for(m)
             o = [float(v) for v in str(kv.get("origin", "0 0 0")).split()]
             if any(b[0] <= o[0] <= b[3] and b[1] <= o[1] <= b[4] and b[2] <= o[2] <= b[5] for b in outdoor):
-                mn, mx = max(mn, 6000), max(mx, 7500)       # plaines : les couverts restent visibles de loin
+                mn, mx = max(mn, 2400), max(mx, 3200)       # plaines : un peu plus loin qu'à l'intérieur, sans excès
             kv["fademindist"], kv["fademaxdist"] = mn, mx
             st["fade"] += 1
             if any(k in m for k in NO_COLLIDE):

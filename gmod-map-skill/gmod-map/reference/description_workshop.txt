@@ -1,0 +1,50 @@
+TITRE :
+Opération Givre Noir : Map d'event Clone Wars (11 phases)
+
+DESCRIPTION :
+[h1]Opération Givre Noir[/h1]
+Map d'event Clone Wars pour [b]70 à 100 joueurs[/b], environ [b]1 h de jeu[/b]. La République attaque une base séparatiste enfouie sous un glacier, contrôlée par [b]SENTINELLE[/b], une IA qui surveille chaque couloir.
+[b]11 phases qui s'enchaînent toutes seules[/b], de l'atterrissage dans la vallée jusqu'à l'extraction sur le glacier. Toute la logique est dans la map : les maîtres du jeu n'ont qu'à raconter et placer les spawns.
+
+[h2]Le déroulé[/h2]
+[list]
+[*][b]Vallée nord[/b] : atterrissage (100 points de départ), grande vallée avec du ciel pour les combats aériens, Venators en orbite.
+[*][b]Le col et le canyon[/b] : un goulot à trois passages, puis la longue approche du canyon.
+[*][b]Hangar[/b] : détruire les 2 générateurs de bouclier, puis les 3 tourelles antiaériennes.
+[*][b]Infiltration[/b] : par les conduits ou par la porte principale.
+[*][b]Usine de droïdes[/b] : saboter les 3 générateurs. Quand ils sautent, toute l'usine perd le courant.
+[*][b]Garnison[/b] (3 étages) : prendre l'armurerie, 3 consoles à activer en même temps.
+[*][b]Centre de données[/b] : piratage en 3 étapes avec compte à rebours, salle plongée dans le noir sous alarme rouge, coupures de courant à réparer au disjoncteur.
+[*][b]Bloc de détention[/b] : faire tomber le champ de force, ouvrir les cellules.
+[*][b]Tour de communication[/b] : poser et protéger 3 charges sur l'antenne.
+[*][b]Noyau du réacteur[/b] : fermer les vannes et surcharger le réacteur avant la fin d'un compte à rebours de 5 minutes. [b]En cas d'échec : fusion du réacteur[/b], la base plonge dans le noir, le ciel vire au rouge et tout explose de plus en plus fort.
+[*][b]Exfiltration[/b] : remonter les puits avant l'effondrement.
+[*][b]Extraction[/b] sur le glacier, pendant que la base s'effondre derrière les joueurs.
+[/list]
+
+[h2]Pour les maîtres du jeu[/h2]
+[list]
+[*]Repères de spawn pour chaque phase : [i]gn_atk_respawn_N[/i] (République) et [i]gn_def_spawn_N[/i] (droïdes).
+[*]Chaque phase peut être lancée à la main depuis la console serveur : [i]lua_run ents.FindByName("gn_phase_N_done")[1]:Fire("Trigger")[/i].
+[*]Seul affichage à l'écran : les comptes à rebours du piratage et du réacteur. Tout le reste est raconté en direct.
+[*]Entités de la map [b]protégées contre le physgun et le toolgun[/b] : impossible de casser l'event (gamemodes dérivés de Sandbox).
+[*]Pensée pour les serveurs avec beaucoup de droïdes : [b]testée à 600 PNJ[/b] sur serveur dédié sans perte de tick, pas de graphe de nœuds PNJ, props allégés (LOD) qui disparaissent avec la distance, visibilité découpée, brouillard réglé pour garder de bons FPS.
+[/list]
+
+[h2]Infos techniques[/h2]
+[list]
+[*][b]Aucun Lua[/b] : uniquement des entités de map.
+[*][b]4 packs requis[/b] (abonnement automatique) : Star Wars Imperial Materials, Star Wars Misc Prop Pack, SW Modelpack Death Star, Sci-Fi Props Megapack. Sons, panneaux et effets maison inclus dans la map.
+[*]Nom en jeu : [i]givre_noir[/i]
+[/list]
+
+[h2]Open source[/h2]
+La map est [b]open source[/b] : vous pouvez la modifier, la reprendre et la republier, [b]à condition de me mentionner[/b] (« Map originale : Opération Givre Noir par Just_Vortex », avec un lien vers cette page).
+Licence : [url=https://creativecommons.org/licenses/by/4.0/deed.fr]Creative Commons Attribution 4.0 (CC BY 4.0)[/url].
+La map est générée par un programme (Python) : on ne la retouche pas à la main, tout le tracé vient du générateur. Les sources (générateur, outils de compilation, .vmf) sont disponibles sur demande.
+[b]Attention[/b] : la licence ne couvre que mon travail (tracé, générateur, logique de la map, sons et textures maison). Les modèles et textures Star Wars appartiennent à leurs auteurs : pour les réutiliser, suivez leurs propres conditions.
+
+[h2]Crédits[/h2]
+Map conçue par [b]Just_Vortex[/b].
+Modèles et textures Star Wars : packs Workshop de leurs auteurs respectifs (Lord Trilobite, KingPommes, Lt_C avec le soutien de PalmliX, CGI CIS Droid Pack). Merci à eux.
+Contenu de base : Valve, Facepunch Studios.
