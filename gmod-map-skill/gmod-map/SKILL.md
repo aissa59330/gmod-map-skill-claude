@@ -35,6 +35,21 @@ projet/
 Principe : **on ne touche jamais le .vmf à la main**, tout vient du générateur (régénérable, versionnable).
 Si l'utilisateur veut passer sur Hammer, lui expliquer que la régénération écraserait ses retouches.
 
+## 1 bis. Concevoir « rectangulaire et optimisé » dès le départ (préférence de l'utilisateur)
+- **Formes rectangulaires** : salles, bâtiments, couloirs et cours en boîtes alignées sur la grille, angles à 90°,
+  couloirs droits avec virages à angle droit. C'est ce qui rend VVIS rapide et la visibilité bien découpée.
+- **Structure en world, décor en func_detail** : seuls les murs droits, sols et plafonds porteurs sont en world ;
+  tout ce qui est rond, incliné ou petit (piliers octogonaux, rochers, rampes, garde-corps, machines) en func_detail,
+  avec si besoin un bloc nodraw world inscrit dedans pour qu'il cache quand même la vue.
+- **Intérieurs fermés** reliés par des **portes + areaportals** (dans l'épaisseur de la porte) : le plus gros gain de
+  FPS sur une map de base / bâtiments. Règle « couloir étroit → grande salle → couloir étroit », jamais deux grandes
+  salles qui se voient directement.
+- **Extérieurs découpés en secteurs** reliés par des cols / goulots (falaises pleines avec bloqueur nodraw), plutôt
+  qu'une seule immense plaine ; ciel couvert par func_viscluster.
+- À éviter : bâtiments ronds en world (des milliers de zones, VVIS de plusieurs heures), grandes plaines sans relief
+  qui voient tout, brushes inclinés en world.
+- Sur un terrain ouvert imposé (style Vexis), appliquer la recette « terrain ouvert » de la section 6 au lieu des areaportals.
+
 ## 2. Construction (generator)
 - Chaque salle = une boîte d'air ; le générateur fait le CSG (murs de 16 min., tout sur la grille de 16, ±16384 max).
 - Échelle : joueur 32×32×72 ; portes ≥ 192×160 ; couloirs 192–320 ; grandes salles 2048–4096 ; marches 8×16.
